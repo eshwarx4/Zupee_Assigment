@@ -1,0 +1,99 @@
+const express = require("express");
+const axios = require("axios");
+const { db } = require("../config/firebase");
+const authMiddleware = require("../middleware/auth");
+
+const router = express.Router();
+
+// POST /place-order
+router.post("/", authMiddleware, async (req, res) => {
+  try {
+    const { symbol, quantity, type, product } = req.body;
+
+    if (!symbol || !quantity || !type || !product) {
+      return res
+        .status(400)
+        .json({ error: "symbol, quantity, type, and product are required" });
+    }
+
+    if (!["BUY", "SELL"].includes(type)) {
+      return res.status(400).json({ error: "type must be BUY or SELL" });
+    }
+
+    if (!["CNC", "MIS"].includes(product)) {
+      return res.status(400).json({ error: "product must be CNC or MIS" });
+    }
+
+    let orderId;
+    let status;
+
+    if (process.env.ZERODHA_ACCESS_TOKEN) {
+      // Place real order via Zerodha Kite API
+      try {
+        const response = await axios.post(
+          "https://api.kite.trade/orders/regular",
+          new URLSearchParams({
+            tradingsymbol: symbol,
+            exchange: "NSE",
+            transaction_type: type,
+            order_type: "MARKET",
+            quantity: String(quantity),
+            product: product,
+            validity: "DAY",
+          }).toString(),
+          {
+            headers: {
+              "X-Kite-Version": "3",
+              Authorization: `token ${process.env.ZERODHA_API_KEY}:${process.env.ZERODHA_ACCESS_TOKEN}`,
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+          }
+        );
+
+        orderId = response.data?.data?.order_id;
+        status = "PLACED";
+      } catch (kiteError) {
+        console.error(
+          "Zerodha order error:",
+          kiteError.response?.data || kiteError.message
+        );
+        return res.status(500).json({
+          error: "Failed to place order with Zerodha",
+          details: kiteError.response?.data?.message || kiteError.message,
+        });
+      }
+    } else {
+      // Simulate order for development
+      orderId = "SIM_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+      status = "SIMULATED";
+    }
+
+    // Save transaction to Firestore
+    const transaction = {
+      userId: req.user.uid,
+      symbol,
+      quantity: Number(quantity),
+      type,
+      product,
+      orderId,
+      status,
+      timestamp: new Date().toISOString(),
+    };
+
+    await db.collection("transactions").add(transaction);
+
+    return res.json({
+      success: true,
+      orderId,
+      message:
+        status === "SIMULATED"
+          ? "Order simulated successfully (no Zerodha access token configured)"
+          : "Order placed successfully via Zerodha",
+    });
+  } catch (error) {
+    console.error("Order error:", error.message);
+    return res.status(500).json({ error: "Failed to process order" });
+  }
+});
+
+module.exports = router;
