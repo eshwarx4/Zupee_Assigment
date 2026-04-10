@@ -11,15 +11,17 @@ router.get("/", authMiddleware, async (req, res) => {
     const snapshot = await db
       .collection("transactions")
       .where("userId", "==", req.user.uid)
-      .orderBy("timestamp", "desc")
       .get();
 
     console.log(`Found ${snapshot.size} transactions for user ${req.user.uid}`);
 
-    const investments = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    // Sort in memory to avoid requiring a composite index for desc sorting
+    const investments = snapshot.docs
+      .map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }))
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     return res.json({ investments });
   } catch (error) {
