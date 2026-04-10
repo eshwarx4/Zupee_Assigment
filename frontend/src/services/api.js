@@ -1,6 +1,6 @@
 import { auth } from '../config/firebase';
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:3000';
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://zupee-assigment.onrender.com';
 
 const getAuthToken = async () => {
   const user = auth.currentUser;

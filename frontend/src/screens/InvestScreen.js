@@ -17,7 +17,7 @@ import { Linking } from 'react-native';
 import { placeOrder, getPortfolio, disconnectZerodha } from '../services/api';
 import { auth } from '../config/firebase';
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:3000';
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://zupee-assigment.onrender.com';
 
 const ORDER_TYPES = ['BUY', 'SELL'];
 const PRODUCT_TYPES = ['CNC', 'MIS'];

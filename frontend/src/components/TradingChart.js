@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, ActivityIndicator, StyleSheet, Dimensions, Platform, Text } from 'react-native';
 
 var SCREEN_WIDTH = Dimensions.get('window').width;
-var BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:3000';
+var BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://zupee-assigment.onrender.com';
 
 var WebView = null;
 if (Platform.OS !== 'web') {
