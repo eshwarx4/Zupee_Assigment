@@ -62,7 +62,8 @@ class _InvestScreenState extends State<InvestScreen> {
       final data = await ApiService.getPortfolio();
       if (mounted) {
         setState(() {
-          _transactions = data['holdings'] ??
+          _transactions = data['investments'] ??
+              data['holdings'] ??
               data['positions'] ??
               data['transactions'] ??
               data['orders'] ??
@@ -70,7 +71,8 @@ class _InvestScreenState extends State<InvestScreen> {
           _loadingPortfolio = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Portfolio error: $e');
       if (mounted) {
         setState(() => _loadingPortfolio = false);
       }
@@ -138,7 +140,7 @@ class _InvestScreenState extends State<InvestScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showSnackBar('Order failed: $e');
+        _showSnackBar('Order failed: ${e.toString().replaceAll('Exception: ', '')}');
       }
     } finally {
       if (mounted) {
