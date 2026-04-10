@@ -12,7 +12,12 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || '1:243983043888:web:60045cc29c9e86e75a4cf5',
 };
 
-const app = initializeApp(firebaseConfig);
+let app;
+try {
+  app = initializeApp(firebaseConfig);
+} catch (e) {
+  console.error("Firebase initialization failed:", e);
+}
 
 let auth;
 if (Platform.OS === 'web') {
