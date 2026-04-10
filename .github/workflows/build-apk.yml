@@ -13,73 +13,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.2'
+          channel: 'stable'
 
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm install
-
-      - name: Install expo-build-properties
-        working-directory: frontend
-        run: npx expo install expo-build-properties
-
-      - name: Generate native Android project
-        working-directory: frontend
-        run: npx expo prebuild --platform android --clean
-
-      - name: List generated files
-        working-directory: frontend/android
-        run: |
-          echo "=== MainApplication ==="
-          cat app/src/main/java/com/bharatnivesh/saathi/MainApplication.kt || cat app/src/main/java/com/bharatnivesh/saathi/MainApplication.java || echo "Not found"
-          echo "=== AndroidManifest ==="
-          cat app/src/main/AndroidManifest.xml
-          echo "=== build.gradle (app) ==="
-          cat app/build.gradle
+      - name: Install dependencies
+        working-directory: flutter_app
+        run: flutter pub get
 
       - name: Build APK
-        working-directory: frontend/android
-        run: |
-          ./gradlew assembleDebug --stacktrace 2>&1 | tee build-output.log
-          BUILD_EXIT=$?
-          echo "=== BUILD EXIT CODE: $BUILD_EXIT ==="
-          echo "=== Searching for APK ==="
-          find . -name "*.apk" -type f
-          exit $BUILD_EXIT
-
-      - name: Find APK files
-        if: always()
-        run: |
-          echo "=== Searching for APK files ==="
-          find frontend/android -name "*.apk" -type f 2>/dev/null
-          echo "=== Listing build outputs ==="
-          ls -R frontend/android/app/build/outputs/ 2>/dev/null || echo "No build outputs directory"
-
-      - name: Upload build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: frontend/android/build-output.log
+        working-directory: flutter_app
+        run: flutter build apk --debug
 
       - name: Upload APK artifact
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: bharat-nivesh-saathi-apk
-          path: frontend/android/app/build/outputs/**/*.apk
+          path: flutter_app/build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30

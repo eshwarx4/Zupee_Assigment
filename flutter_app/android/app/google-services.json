@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "243983043888",
+    "project_id": "zupee-35ca1",
+    "storage_bucket": "zupee-35ca1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:243983043888:android:60045cc29c9e86e75a4cf5",
+        "android_client_info": {
+          "package_name": "com.bharatnivesh.bharat_nivesh_saathi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBSHNJA8oyhUEqKaFrf6ODi98XhIklzXA0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
