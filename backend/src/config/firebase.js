@@ -17,9 +17,19 @@ const serviceAccountPath = path.resolve(__dirname, "../../serviceAccountKey.json
 // 1. Prioritize environment variable (best for cloud hosts like Render)
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   try {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    let serviceAccount;
 
-    // Fix for nested newlines that often get garbled in env vars
+    // Check if it's Base64 encoded (starts with 'ewog' or similar JSON start)
+    // or if it's a raw JSON string
+    if (process.env.FIREBASE_SERVICE_ACCOUNT.startsWith('{')) {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    } else {
+      // Decode Base64
+      const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf8');
+      serviceAccount = JSON.parse(decoded);
+    }
+
+    // Fix for nested newlines just in case
     if (serviceAccount.private_key) {
       serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
     }
