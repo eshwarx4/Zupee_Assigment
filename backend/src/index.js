@@ -7,6 +7,7 @@ const orderRoutes = require("./routes/order");
 const portfolioRoutes = require("./routes/portfolio");
 const goalsRoutes = require("./routes/goals");
 const zerodhaRoutes = require("./routes/zerodha");
+const chartDataRoutes = require("./routes/chartData");
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use("/place-order", orderRoutes);
 app.use("/portfolio", portfolioRoutes);
 app.use("/goals", goalsRoutes);
 app.use("/zerodha", zerodhaRoutes);
+app.use("/chart-data", chartDataRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

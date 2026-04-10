@@ -11,9 +11,11 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from 'react-native';
 import { Linking } from 'react-native';
 import { placeOrder, getPortfolio, disconnectZerodha } from '../services/api';
+import { auth } from '../config/firebase';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:3000';
 
@@ -29,6 +31,7 @@ export default function InvestScreen() {
   const [transactions, setTransactions] = useState([]);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [zerodhaConnected, setZerodhaConnected] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     fetchTransactions();
@@ -74,7 +77,33 @@ export default function InvestScreen() {
     }
   };
 
-  const handlePlaceOrder = async () => {
+  const proceedWithOrder = async () => {
+    setShowConfirm(false);
+    setPlacing(true);
+    try {
+      const response = await placeOrder({
+        symbol: symbol.toUpperCase().trim(),
+        quantity: parseInt(quantity),
+        type: orderType,
+        product: productType,
+      });
+
+      Alert.alert(
+        'Success',
+        response.message || `${orderType} order for ${quantity} shares of ${symbol.toUpperCase()} placed successfully.`
+      );
+
+      setSymbol('');
+      setQuantity('');
+      fetchTransactions();
+    } catch (error) {
+      Alert.alert('Order Failed', error.message || 'Failed to place order. Please try again.');
+    } finally {
+      setPlacing(false);
+    }
+  };
+
+  const handlePlaceOrder = () => {
     if (!symbol.trim()) {
       Alert.alert('Error', 'Please enter a stock symbol.');
       return;
@@ -84,38 +113,7 @@ export default function InvestScreen() {
       return;
     }
 
-    Alert.alert(
-      'Confirm Order',
-      `${orderType} ${quantity} shares of ${symbol.toUpperCase()} (${productType})?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Confirm',
-          onPress: async () => {
-            setPlacing(true);
-            try {
-              const response = await placeOrder({
-                symbol: symbol.toUpperCase().trim(),
-                quantity: parseInt(quantity),
-                type: orderType,
-                product: productType,
-              });
-              Alert.alert(
-                'Order Placed!',
-                response.message || `${orderType} order for ${quantity} shares of ${symbol.toUpperCase()} placed successfully.`
-              );
-              setSymbol('');
-              setQuantity('');
-              fetchTransactions();
-            } catch (error) {
-              Alert.alert('Order Failed', error.message || 'Failed to place order. Please try again.');
-            } finally {
-              setPlacing(false);
-            }
-          },
-        },
-      ]
-    );
+    setShowConfirm(true);
   };
 
   const renderTransaction = ({ item }) => {
@@ -177,6 +175,14 @@ export default function InvestScreen() {
             </View>
           )}
         </View>
+
+        {/* View Charts Button */}
+        <TouchableOpacity
+          style={styles.viewChartsButton}
+          onPress={() => navigation.navigate('Charts')}
+        >
+          <Text style={styles.viewChartsText}>📊 View Live Charts</Text>
+        </TouchableOpacity>
 
         <View style={styles.formCard}>
           <Text style={styles.fieldLabel}>Stock Symbol</Text>
@@ -299,6 +305,53 @@ export default function InvestScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Confirmation Modal */}
+      <Modal
+        visible={showConfirm}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowConfirm(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Confirm Order</Text>
+            <View style={styles.modalInfoRow}>
+              <Text style={styles.modalInfoLabel}>Action:</Text>
+              <Text style={[styles.modalInfoValue, orderType === 'BUY' ? styles.buyText : styles.sellText]}>
+                {orderType}
+              </Text>
+            </View>
+            <View style={styles.modalInfoRow}>
+              <Text style={styles.modalInfoLabel}>Asset:</Text>
+              <Text style={styles.modalInfoValue}>{symbol.toUpperCase()}</Text>
+            </View>
+            <View style={styles.modalInfoRow}>
+              <Text style={styles.modalInfoLabel}>Quantity:</Text>
+              <Text style={styles.modalInfoValue}>{quantity} shares</Text>
+            </View>
+            <View style={styles.modalInfoRow}>
+              <Text style={styles.modalInfoLabel}>Type:</Text>
+              <Text style={styles.modalInfoValue}>{productType}</Text>
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => setShowConfirm(false)}
+              >
+                <Text style={styles.modalCancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalConfirmButton, orderType === 'SELL' && styles.modalConfirmButtonSell]}
+                onPress={proceedWithOrder}
+              >
+                <Text style={styles.modalConfirmButtonText}>Confirm {orderType}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -577,5 +630,96 @@ const styles = StyleSheet.create({
     color: '#FF1744',
     fontWeight: '600',
     fontSize: 14,
+  },
+  viewChartsButton: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: '#FF6B00',
+  },
+  viewChartsText: {
+    color: '#FF6B00',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1a1a2e',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    paddingBottom: 8,
+  },
+  modalInfoLabel: {
+    fontSize: 15,
+    color: '#666',
+    fontWeight: '500',
+  },
+  modalInfoValue: {
+    fontSize: 16,
+    color: '#1a1a2e',
+    fontWeight: '700',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
+  },
+  modalCancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#f5f5f5',
+    alignItems: 'center',
+  },
+  modalCancelButtonText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalConfirmButton: {
+    flex: 2,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#00C853',
+    alignItems: 'center',
+  },
+  modalConfirmButtonSell: {
+    backgroundColor: '#FF1744',
+  },
+  modalConfirmButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

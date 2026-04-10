@@ -6,12 +6,15 @@ const router = express.Router();
 
 // GET /portfolio
 router.get("/", authMiddleware, async (req, res) => {
+  console.log("Portfolio Request for User:", req.user?.uid);
   try {
     const snapshot = await db
       .collection("transactions")
       .where("userId", "==", req.user.uid)
       .orderBy("timestamp", "desc")
       .get();
+
+    console.log(`Found ${snapshot.size} transactions for user ${req.user.uid}`);
 
     const investments = snapshot.docs.map((doc) => ({
       id: doc.id,

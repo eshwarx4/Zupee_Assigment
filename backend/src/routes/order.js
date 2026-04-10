@@ -7,7 +7,9 @@ const router = express.Router();
 
 // POST /place-order
 router.post("/", authMiddleware, async (req, res) => {
+  console.log("Order Request Received:", req.body, "User:", req.user?.uid);
   try {
+    let orderId, status;
     const { symbol, quantity, type, product } = req.body;
 
     if (!symbol || !quantity || !type || !product) {
@@ -71,6 +73,7 @@ router.post("/", authMiddleware, async (req, res) => {
       }
     } else {
       // Simulate order for development
+      console.log("No Zerodha token found, simulating order...");
       orderId = "SIM_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
       status = "SIMULATED";
     }
@@ -87,7 +90,9 @@ router.post("/", authMiddleware, async (req, res) => {
       timestamp: new Date().toISOString(),
     };
 
-    await db.collection("transactions").add(transaction);
+    console.log("Saving transaction to Firestore:", transaction);
+    const docRef = await db.collection("transactions").add(transaction);
+    console.log("Transaction saved with ID:", docRef.id);
 
     return res.json({
       success: true,
