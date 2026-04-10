@@ -20,16 +20,25 @@ try {
 }
 
 let auth;
-if (Platform.OS === 'web') {
-  auth = getAuth(app);
-} else {
-  const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-  auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage),
-  });
-}
+let db;
 
-const db = getFirestore(app);
+if (app) {
+  if (Platform.OS === 'web') {
+    auth = getAuth(app);
+  } else {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      auth = initializeAuth(app, {
+        persistence: getReactNativePersistence(AsyncStorage),
+      });
+    } catch (e) {
+      console.error("Auth initialization failed:", e);
+    }
+  }
+  db = getFirestore(app);
+} else {
+  console.error("Skipping Auth/DB initialization: Firebase App is missing.");
+}
 
 export { auth, db };
 export default app;
