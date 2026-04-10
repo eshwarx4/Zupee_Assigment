@@ -26,7 +26,7 @@ router.post("/", authMiddleware, async (req, res) => {
       return res.status(400).json({ error: "product must be CNC or MIS" });
     }
 
-    // Fetch user's Zerodha token from Firestore
+    console.log("Fetching Zerodha token from Firestore for UID:", req.user.uid);
     const tokenDoc = await db
       .collection("users")
       .doc(req.user.uid)
@@ -35,6 +35,7 @@ router.post("/", authMiddleware, async (req, res) => {
       .get();
 
     const accessToken = tokenDoc.exists ? tokenDoc.data().accessToken : null;
+    console.log("Zerodha token check:", accessToken ? "FOUND" : "NOT FOUND");
 
     if (accessToken) {
       // Place real order via Zerodha Kite API
@@ -90,9 +91,9 @@ router.post("/", authMiddleware, async (req, res) => {
       timestamp: new Date().toISOString(),
     };
 
-    console.log("Saving transaction to Firestore:", transaction);
+    console.log("Attempting to save transaction to Firestore:", transaction);
     const docRef = await db.collection("transactions").add(transaction);
-    console.log("Transaction saved with ID:", docRef.id);
+    console.log("Transaction saved successfully. Firestore ID:", docRef.id);
 
     return res.json({
       success: true,
