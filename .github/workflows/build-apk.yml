@@ -55,6 +55,14 @@ jobs:
         working-directory: frontend/android
         run: ./gradlew assembleDebug 2>&1 | tee build-output.log
 
+      - name: Find APK files
+        if: always()
+        run: |
+          echo "=== Searching for APK files ==="
+          find frontend/android -name "*.apk" -type f 2>/dev/null
+          echo "=== Listing build outputs ==="
+          ls -R frontend/android/app/build/outputs/ 2>/dev/null || echo "No build outputs directory"
+
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
@@ -63,8 +71,9 @@ jobs:
           path: frontend/android/build-output.log
 
       - name: Upload APK artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: bharat-nivesh-saathi-apk
-          path: frontend/android/app/build/outputs/apk/debug/*.apk
+          path: frontend/android/app/build/outputs/**/*.apk
           retention-days: 30
