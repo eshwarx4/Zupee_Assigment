@@ -33,13 +33,34 @@ jobs:
         working-directory: frontend
         run: npm install
 
+      - name: Install expo-build-properties
+        working-directory: frontend
+        run: npx expo install expo-build-properties
+
       - name: Generate native Android project
         working-directory: frontend
         run: npx expo prebuild --platform android --clean
 
+      - name: List generated files
+        working-directory: frontend/android
+        run: |
+          echo "=== MainApplication ==="
+          cat app/src/main/java/com/bharatnivesh/saathi/MainApplication.kt || cat app/src/main/java/com/bharatnivesh/saathi/MainApplication.java || echo "Not found"
+          echo "=== AndroidManifest ==="
+          cat app/src/main/AndroidManifest.xml
+          echo "=== build.gradle (app) ==="
+          cat app/build.gradle
+
       - name: Build APK
         working-directory: frontend/android
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug 2>&1 | tee build-output.log
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: frontend/android/build-output.log
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

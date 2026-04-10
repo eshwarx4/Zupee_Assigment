@@ -1,8 +1,26 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet, View, Text } from 'react-native';
-import AppNavigator from './src/navigation/AppNavigator';
+import { StyleSheet, View, Text, LogBox } from 'react-native';
+
+LogBox.ignoreAllLogs(true);
+
+let GestureHandlerRootView;
+try {
+  GestureHandlerRootView = require('react-native-gesture-handler').GestureHandlerRootView;
+} catch (e) {
+  GestureHandlerRootView = View;
+}
+
+let AppNavigator;
+try {
+  AppNavigator = require('./src/navigation/AppNavigator').default;
+} catch (e) {
+  AppNavigator = () => (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1a1a2e' }}>
+      <Text style={{ color: '#ff6b6b', fontSize: 16 }}>Navigation failed to load: {e?.message}</Text>
+    </View>
+  );
+}
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
