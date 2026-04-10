@@ -13,21 +13,31 @@ import { auth } from '../config/firebase';
 export default function ProfileScreen() {
   const user = auth.currentUser;
 
-  const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await signOut(auth);
-          } catch (error) {
-            Alert.alert('Error', 'Failed to sign out. Please try again.');
-          }
+  const handleSignOut = async () => {
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Are you sure you want to sign out?');
+      if (!confirmed) return;
+      try {
+        await signOut(auth);
+      } catch (error) {
+        window.alert('Failed to sign out. Please try again.');
+      }
+    } else {
+      Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOut(auth);
+            } catch (error) {
+              Alert.alert('Error', 'Failed to sign out. Please try again.');
+            }
+          },
         },
-      },
-    ]);
+      ]);
+    }
   };
 
   return (
