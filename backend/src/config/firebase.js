@@ -14,10 +14,21 @@ const path = require("path");
 
 const serviceAccountPath = path.resolve(__dirname, "../../serviceAccountKey.json");
 
-// 1. Prioritize granular environment variables (Recommended for Render)
-if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
+// 1. Prioritize a single JSON string (Enables easy one-field paste on Render)
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   try {
-    // Restore newlines in private key
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+    console.log("🔥 Firebase Admin initialized with Full JSON ENV variable");
+  } catch (err) {
+    console.error("❌ Failed to parse FIREBASE_SERVICE_ACCOUNT:", err.message);
+  }
+}
+// 2. Granular environment variables
+else if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
+  try {
     const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
     admin.initializeApp({
       credential: admin.credential.cert({
@@ -28,24 +39,24 @@ if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
     });
     console.log("🔥 Firebase Admin initialized with Granular ENV variables");
   } catch (err) {
-    console.error("❌ Failed to initialize Firebase with granular variables:", err.message);
+    console.error("❌ Failed to initialize with granular variables:", err.message);
   }
 }
-// 2. Fallback to local file (best for local development)
+// 3. Local file (Development)
 else if (fs.existsSync(serviceAccountPath)) {
   const serviceAccount = require(serviceAccountPath);
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    projectId: process.env.FIREBASE_PROJECT_ID,
   });
   console.log("🔥 Firebase Admin initialized with local Service Account file");
 }
-// 3. Fallback to Project ID only (limited access)
+// 4. Fallback (Fails on Firestore writes)
 else {
+  console.warn("⚠️ NO FIREBASE CREDENTIALS FOUND. Initialization using Project ID only.");
+  console.warn("Missing: FIREBASE_SERVICE_ACCOUNT or (FIREBASE_PRIVATE_KEY and FIREBASE_CLIENT_EMAIL)");
   admin.initializeApp({
-    projectId: process.env.FIREBASE_PROJECT_ID,
+    projectId: process.env.FIREBASE_PROJECT_ID || 'zupee-35ca1',
   });
-  console.log("⚠️ Firebase Admin initialized with Project ID only (Limited Access)");
 }
 
 const db = admin.firestore();
