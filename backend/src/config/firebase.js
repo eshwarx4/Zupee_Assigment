@@ -14,22 +14,33 @@ const path = require("path");
 
 const serviceAccountPath = path.resolve(__dirname, "../../serviceAccountKey.json");
 
-// 1. Prioritize environment variable (best for cloud hosts like Render)
-if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+// 1. Prioritize granular environment variables (Most reliable)
+if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
+  try {
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: privateKey,
+      }),
+    });
+    console.log("🔥 Firebase Admin initialized with Granular ENV variables");
+  } catch (err) {
+    console.error("❌ Failed to initialize Firebase with granular variables:", err.message);
+  }
+}
+// 2. Fallback to full JSON string / Base64 (older method)
+else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   try {
     let serviceAccount;
-
-    // Check if it's Base64 encoded (starts with 'ewog' or similar JSON start)
-    // or if it's a raw JSON string
     if (process.env.FIREBASE_SERVICE_ACCOUNT.startsWith('{')) {
       serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
     } else {
-      // Decode Base64
       const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf8');
       serviceAccount = JSON.parse(decoded);
     }
 
-    // Fix for nested newlines just in case
     if (serviceAccount.private_key) {
       serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
     }
@@ -38,7 +49,7 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
       credential: admin.credential.cert(serviceAccount),
       projectId: process.env.FIREBASE_PROJECT_ID,
     });
-    console.log("🔥 Firebase Admin initialized with Service Account from ENV");
+    console.log("🔥 Firebase Admin initialized with Service Account from ENV string");
   } catch (err) {
     console.error("❌ Failed to parse FIREBASE_SERVICE_ACCOUNT env var:", err.message);
   }
