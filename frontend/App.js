@@ -1,61 +1,96 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View, Text, LogBox } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
 
-LogBox.ignoreAllLogs(true);
+// Stage 1: Basic render test
+function TestScreen() {
+  const [stage, setStage] = useState('Basic render works');
+  const [error, setError] = useState(null);
 
-let GestureHandlerRootView;
-try {
-  GestureHandlerRootView = require('react-native-gesture-handler').GestureHandlerRootView;
-} catch (e) {
-  GestureHandlerRootView = View;
-}
+  useEffect(() => {
+    // Stage 2: Test gesture handler
+    try {
+      require('react-native-gesture-handler');
+      setStage('Gesture handler loaded');
+    } catch (e) {
+      setError('Gesture handler failed: ' + e.message);
+      return;
+    }
 
-let AppNavigator;
-try {
-  AppNavigator = require('./src/navigation/AppNavigator').default;
-} catch (e) {
-  AppNavigator = () => (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1a1a2e' }}>
-      <Text style={{ color: '#ff6b6b', fontSize: 16 }}>Navigation failed to load: {e?.message}</Text>
+    // Stage 3: Test navigation
+    try {
+      require('@react-navigation/native');
+      require('@react-navigation/native-stack');
+      require('@react-navigation/bottom-tabs');
+      setStage('Navigation loaded');
+    } catch (e) {
+      setError('Navigation failed: ' + e.message);
+      return;
+    }
+
+    // Stage 4: Test firebase
+    try {
+      require('firebase/app');
+      setStage('Firebase loaded');
+    } catch (e) {
+      setError('Firebase failed: ' + e.message);
+      return;
+    }
+
+    // Stage 5: Test AsyncStorage
+    try {
+      require('@react-native-async-storage/async-storage');
+      setStage('AsyncStorage loaded');
+    } catch (e) {
+      setError('AsyncStorage failed: ' + e.message);
+      return;
+    }
+
+    // Stage 6: Load full app
+    try {
+      setStage('All modules loaded! Loading app...');
+    } catch (e) {
+      setError('App load failed: ' + e.message);
+    }
+  }, []);
+
+  return (
+    <View style={styles.container}>
+      <StatusBar style="light" />
+      <Text style={styles.title}>Bharat Nivesh Saathi</Text>
+      <Text style={styles.status}>{stage}</Text>
+      {error && <Text style={styles.error}>{error}</Text>}
     </View>
   );
 }
 
-class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1a1a2e', padding: 20 }}>
-          <Text style={{ color: '#ff6b6b', fontSize: 20, fontWeight: 'bold', marginBottom: 10 }}>Something went wrong</Text>
-          <Text style={{ color: '#ccc', fontSize: 14, textAlign: 'center' }}>{this.state.error?.toString()}</Text>
-        </View>
-      );
-    }
-    return this.props.children;
-  }
-}
-
 export default function App() {
-  return (
-    <ErrorBoundary>
-      <GestureHandlerRootView style={styles.container}>
-        <StatusBar style="light" />
-        <AppNavigator />
-      </GestureHandlerRootView>
-    </ErrorBoundary>
-  );
+  return <TestScreen />;
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1a1a2e',
+    padding: 20,
+  },
+  title: {
+    color: '#FF6B00',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  status: {
+    color: '#00C853',
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  error: {
+    color: '#FF1744',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 10,
   },
 });
