@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ActivityIndicator, View, Text, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../config/firebase';
 
@@ -22,8 +22,8 @@ try {
 }
 
 const Tab = createBottomTabNavigator();
-const AuthStack = createStackNavigator();
-const RootStack = createStackNavigator();
+const AuthStack = createNativeStackNavigator();
+const RootStack = createNativeStackNavigator();
 
 const ICON_MAP = {
   Dashboard: { icon: 'home', fallback: '\u{1F3E0}' },
@@ -116,6 +116,10 @@ export default function AppNavigator() {
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
+    if (!auth) {
+      setInitializing(false);
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       if (initializing) setInitializing(false);
