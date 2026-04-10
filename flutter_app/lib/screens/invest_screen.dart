@@ -424,7 +424,13 @@ class _InvestScreenState extends State<InvestScreen> {
               _buildToggleChip('SELL', !_isBuy, const Color(0xFFFF1744), () {
                 setState(() => _isBuy = false);
               }),
-              const SizedBox(width: 24),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // CNC / MIS toggle
+          Row(
+            children: [
               const Text('Product: ',
                   style: TextStyle(
                       color: Color(0xFF1a1a2e), fontWeight: FontWeight.w500)),

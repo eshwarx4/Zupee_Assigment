@@ -3,6 +3,7 @@ import 'dashboard_screen.dart';
 import 'goals_screen.dart';
 import 'chat_screen.dart';
 import 'invest_screen.dart';
+import 'chart_screen.dart';
 import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -20,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
     GoalsScreen(),
     ChatScreen(),
     InvestScreen(),
+    ChartScreen(),
     ProfileScreen(),
   ];
 
@@ -57,6 +59,10 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.trending_up),
             label: 'Invest',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart),
+            label: 'Charts',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
