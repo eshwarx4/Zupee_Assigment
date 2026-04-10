@@ -103,8 +103,12 @@ router.post("/", authMiddleware, async (req, res) => {
           : "Order placed successfully via Zerodha",
     });
   } catch (error) {
-    console.error("Order error:", error.message);
-    return res.status(500).json({ error: "Failed to process order" });
+    console.error("Order error:", error);
+    return res.status(500).json({
+      error: "Failed to process order",
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
