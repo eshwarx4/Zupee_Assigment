@@ -14,16 +14,30 @@ const path = require("path");
 
 const serviceAccountPath = path.resolve(__dirname, "../../serviceAccountKey.json");
 
-console.log("Checking for Firebase Service Account at:", serviceAccountPath);
-
-if (fs.existsSync(serviceAccountPath)) {
+// 1. Prioritize environment variable (best for cloud hosts like Render)
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  try {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      projectId: process.env.FIREBASE_PROJECT_ID,
+    });
+    console.log("🔥 Firebase Admin initialized with Service Account from ENV");
+  } catch (err) {
+    console.error("❌ Failed to parse FIREBASE_SERVICE_ACCOUNT env var:", err.message);
+  }
+}
+// 2. Fallback to local file (best for local development)
+else if (fs.existsSync(serviceAccountPath)) {
   const serviceAccount = require(serviceAccountPath);
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     projectId: process.env.FIREBASE_PROJECT_ID,
   });
-  console.log("🔥 Firebase Admin initialized with Service Account");
-} else {
+  console.log("🔥 Firebase Admin initialized with local Service Account file");
+}
+// 3. Fallback to Project ID only (limited access)
+else {
   admin.initializeApp({
     projectId: process.env.FIREBASE_PROJECT_ID,
   });
