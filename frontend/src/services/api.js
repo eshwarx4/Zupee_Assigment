@@ -48,4 +48,10 @@ export const getPortfolio = async () => {
   });
 };
 
+export const disconnectZerodha = async () => {
+  return apiRequest('/zerodha/logout', {
+    method: 'POST',
+  });
+};
+
 export { getAuthToken };

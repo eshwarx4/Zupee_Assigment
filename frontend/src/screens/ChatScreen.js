@@ -41,10 +41,10 @@ export default function ChatScreen() {
     setLoading(true);
 
     try {
-      const response = await chatWithAI(text);
+      const responseData = await chatWithAI(text);
       const aiMessage = {
         id: `ai-${Date.now()}`,
-        text: response.reply || response.message || 'I apologize, I could not process that request. Please try again.',
+        text: responseData.response || responseData.reply || responseData.message || 'I apologize, I could not process that request. Please try again.',
         isUser: false,
         timestamp: Date.now(),
       };

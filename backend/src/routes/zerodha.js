@@ -4,17 +4,19 @@ const crypto = require("crypto");
 
 const router = express.Router();
 
-let accessToken = process.env.ZERODHA_ACCESS_TOKEN || "";
-
 // GET /zerodha/login - Redirect user to Zerodha login page
 router.get("/login", (req, res) => {
-  const loginUrl = `https://kite.zerodha.com/connect/login?v=3&api_key=${process.env.ZERODHA_API_KEY}`;
+  const { userId } = req.query;
+  const loginUrl = `https://kite.zerodha.com/connect/login?v=3&api_key=${process.env.ZERODHA_API_KEY}${userId ? `&state=${userId}` : ""
+    }`;
   res.redirect(loginUrl);
 });
 
+const { db } = require("../config/firebase");
+
 // GET /zerodha/callback - Handle redirect after Zerodha login
 router.get("/callback", async (req, res) => {
-  const { request_token } = req.query;
+  const { request_token, state: userId } = req.query;
 
   if (!request_token) {
     return res.status(400).send("Missing request_token from Zerodha");
@@ -25,9 +27,7 @@ router.get("/callback", async (req, res) => {
     const checksum = crypto
       .createHash("sha256")
       .update(
-        process.env.ZERODHA_API_KEY +
-          request_token +
-          process.env.ZERODHA_API_SECRET
+        process.env.ZERODHA_API_KEY + request_token + process.env.ZERODHA_API_SECRET
       )
       .digest("hex");
 
@@ -47,10 +47,15 @@ router.get("/callback", async (req, res) => {
       }
     );
 
-    accessToken = response.data?.data?.access_token;
-    process.env.ZERODHA_ACCESS_TOKEN = accessToken;
+    const accessToken = response.data?.data?.access_token;
 
-    console.log("Zerodha access token obtained successfully");
+    if (accessToken && userId) {
+      await db.collection("users").doc(userId).collection("tokens").doc("zerodha").set({
+        accessToken,
+        updatedAt: new Date().toISOString(),
+      });
+      console.log(`Zerodha access token stored for user: ${userId}`);
+    }
 
     // Show success page that auto-closes
     res.send(`
@@ -81,14 +86,49 @@ router.get("/callback", async (req, res) => {
   }
 });
 
-// GET /zerodha/status - Check if Zerodha is connected
-router.get("/status", (req, res) => {
-  res.json({
-    connected: !!accessToken,
-    message: accessToken
-      ? "Zerodha is connected. You can place real orders."
-      : "Zerodha not connected. Orders will be simulated.",
-  });
+// GET /zerodha/status - Check if Zerodha is connected for the specific user
+router.get("/status", async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) return res.json({ connected: false });
+
+    const doc = await db
+      .collection("users")
+      .doc(userId)
+      .collection("tokens")
+      .doc("zerodha")
+      .get();
+
+    const isConnected = doc.exists && doc.data().accessToken;
+
+    res.json({
+      connected: isConnected,
+      message: isConnected
+        ? "Zerodha is connected. You can place real orders."
+        : "Zerodha not connected. Orders will be simulated.",
+    });
+  } catch (error) {
+    res.json({ connected: false, message: "Error checking status" });
+  }
+});
+
+// POST /zerodha/logout - Disconnect Zerodha for the user
+router.post("/logout", async (req, res) => {
+  try {
+    const { userId } = req.body; // or fetch from auth middleware if applicable
+    if (userId) {
+      await db
+        .collection("users")
+        .doc(userId)
+        .collection("tokens")
+        .doc("zerodha")
+        .delete();
+      console.log(`Zerodha disconnected for user: ${userId}`);
+    }
+    res.json({ success: true, message: "Disconnected from Zerodha" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to disconnect" });
+  }
 });
 
 module.exports = router;

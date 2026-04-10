@@ -24,10 +24,17 @@ router.post("/", authMiddleware, async (req, res) => {
       return res.status(400).json({ error: "product must be CNC or MIS" });
     }
 
-    let orderId;
-    let status;
+    // Fetch user's Zerodha token from Firestore
+    const tokenDoc = await db
+      .collection("users")
+      .doc(req.user.uid)
+      .collection("tokens")
+      .doc("zerodha")
+      .get();
 
-    if (process.env.ZERODHA_ACCESS_TOKEN) {
+    const accessToken = tokenDoc.exists ? tokenDoc.data().accessToken : null;
+
+    if (accessToken) {
       // Place real order via Zerodha Kite API
       try {
         const response = await axios.post(
@@ -44,7 +51,7 @@ router.post("/", authMiddleware, async (req, res) => {
           {
             headers: {
               "X-Kite-Version": "3",
-              Authorization: `token ${process.env.ZERODHA_API_KEY}:${process.env.ZERODHA_ACCESS_TOKEN}`,
+              Authorization: `token ${process.env.ZERODHA_API_KEY}:${accessToken}`,
               "Content-Type": "application/x-www-form-urlencoded",
             },
           }

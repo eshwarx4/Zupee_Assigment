@@ -13,7 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { Linking } from 'react-native';
-import { placeOrder, getPortfolio } from '../services/api';
+import { placeOrder, getPortfolio, disconnectZerodha } from '../services/api';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:3000';
 
@@ -37,7 +37,8 @@ export default function InvestScreen() {
 
   const checkZerodhaStatus = async () => {
     try {
-      const res = await fetch(`${BACKEND_URL}/zerodha/status`);
+      const user = auth.currentUser;
+      const res = await fetch(`${BACKEND_URL}/zerodha/status?userId=${user?.uid}`);
       const data = await res.json();
       setZerodhaConnected(data.connected);
     } catch (e) {
@@ -46,14 +47,26 @@ export default function InvestScreen() {
   };
 
   const connectZerodha = () => {
-    Linking.openURL(`${BACKEND_URL}/zerodha/login`);
+    const user = auth.currentUser;
+    Linking.openURL(`${BACKEND_URL}/zerodha/login?userId=${user?.uid}`);
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      const user = auth.currentUser;
+      await disconnectZerodha({ userId: user?.uid });
+      setZerodhaConnected(false);
+      Alert.alert('Disconnected', 'Successfully disconnected from Zerodha.');
+    } catch (e) {
+      Alert.alert('Error', 'Failed to disconnect. Please try again.');
+    }
   };
 
   const fetchTransactions = async () => {
     setLoadingTransactions(true);
     try {
       const data = await getPortfolio();
-      setTransactions(data.portfolio || data.transactions || data || []);
+      setTransactions(data.investments || data.portfolio || data.transactions || (Array.isArray(data) ? data : []));
     } catch (error) {
       console.log('Error fetching portfolio:', error);
     } finally {
@@ -154,9 +167,14 @@ export default function InvestScreen() {
             </TouchableOpacity>
           )}
           {zerodhaConnected && (
-            <TouchableOpacity style={styles.refreshStatusButton} onPress={checkZerodhaStatus}>
-              <Text style={styles.refreshStatusText}>Refresh Status</Text>
-            </TouchableOpacity>
+            <View style={styles.zerodhaActions}>
+              <TouchableOpacity style={styles.refreshStatusButton} onPress={checkZerodhaStatus}>
+                <Text style={styles.refreshStatusText}>Refresh Status</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.disconnectButton} onPress={handleDisconnect}>
+                <Text style={styles.disconnectText}>Disconnect</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
@@ -538,10 +556,25 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   refreshStatusButton: {
-    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
   refreshStatusText: {
     color: '#FF6B00',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  zerodhaActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  disconnectButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  disconnectText: {
+    color: '#FF1744',
     fontWeight: '600',
     fontSize: 14,
   },
