@@ -53,7 +53,13 @@ jobs:
 
       - name: Build APK
         working-directory: frontend/android
-        run: ./gradlew assembleDebug 2>&1 | tee build-output.log
+        run: |
+          ./gradlew assembleDebug --stacktrace 2>&1 | tee build-output.log
+          BUILD_EXIT=$?
+          echo "=== BUILD EXIT CODE: $BUILD_EXIT ==="
+          echo "=== Searching for APK ==="
+          find . -name "*.apk" -type f
+          exit $BUILD_EXIT
 
       - name: Find APK files
         if: always()
