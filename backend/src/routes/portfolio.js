@@ -25,8 +25,11 @@ router.get("/", authMiddleware, async (req, res) => {
 
     return res.json({ investments });
   } catch (error) {
-    console.error("Portfolio error:", error.message);
-    return res.status(500).json({ error: "Failed to fetch portfolio" });
+    console.error("Portfolio error:", error);
+    return res.status(500).json({
+      error: "Failed to fetch portfolio",
+      details: error.message
+    });
   }
 });
 
