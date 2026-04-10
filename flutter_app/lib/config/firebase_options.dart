@@ -28,8 +28,8 @@ class DefaultFirebaseOptions {
   // For Android, user needs to add google-services.json
   // Using web config as fallback
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBSHNJA8oyhUEqKaFrf6ODi98XhIklzXA0',
-    appId: '1:243983043888:web:60045cc29c9e86e75a4cf5',
+    apiKey: 'AIzaSyCi7im9FEASY07uGPjVD7m99f7rEqQe_RY',
+    appId: '1:243983043888:android:eb97ccede4bee2305a4cf5',
     messagingSenderId: '243983043888',
     projectId: 'zupee-35ca1',
     storageBucket: 'zupee-35ca1.firebasestorage.app',

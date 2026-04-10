@@ -1,4 +1,4 @@
-package com.bharatnivesh.bharat_nivesh_saathi
+package com.zupee
 
 import io.flutter.embedding.android.FlutterActivity
 

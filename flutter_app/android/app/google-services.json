@@ -7,15 +7,15 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:243983043888:android:60045cc29c9e86e75a4cf5",
+        "mobilesdk_app_id": "1:243983043888:android:eb97ccede4bee2305a4cf5",
         "android_client_info": {
-          "package_name": "com.bharatnivesh.bharat_nivesh_saathi"
+          "package_name": "com.zupee"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBSHNJA8oyhUEqKaFrf6ODi98XhIklzXA0"
+          "current_key": "AIzaSyCi7im9FEASY07uGPjVD7m99f7rEqQe_RY"
         }
       ],
       "services": {
